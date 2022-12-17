@@ -1,6 +1,6 @@
 <img src="./.assets/christmas_ferris.png" width="164">
 
-# 🎄 Advent of Code {year}
+# 🎄 Advent of Code 2022
 
 Solutions for [Advent of Code](https://adventofcode.com/) in [Rust](https://www.rust-lang.org/).
 
@@ -8,25 +8,11 @@ Solutions for [Advent of Code](https://adventofcode.com/) in [Rust](https://www.
 
 ---
 
-## Template setup
+This repo is a collection of my pitiful attempts to solve AOC in the best system/backend/frontend/everything language.
 
-This template supports all major OS (macOS, Linux, Windows).
+## Isn't this setup cool?
 
-### Create your repository 📝
-
-1.  Open [the template repository](https://github.com/fspoettel/advent-of-code-rust) on Github.
-2.  Click [Use this template](https://github.com/fspoettel/advent-of-code-rust/generate) and create your repository.
-3.  Clone your repository to your computer.
-
-### Setup rust 💻
-
-1.  Install the [Rust toolchain](https://www.rust-lang.org/tools/install).
-2.  (recommended) Install the [rust-analyzer](https://rust-analyzer.github.io/manual.html) extension for your code editor.
-3.  (optional) Install a native debugger. If you are using VS Code, [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) is a good option.
-
----
-
-✨ You can start solving puzzles now! Head to the [Usage section](#usage) to see how to use this template. If you like, you can configure [some optional features](#optional-template-features).
+Yeah!  It is!  [I stole it](https://github.com/fspoettel/advent-of-code-rust)
 
 ## Usage
 
@@ -52,7 +38,7 @@ When editing a solution, `rust-analyzer` will display buttons for running / debu
 
 ### Download input & description for a day
 
-> **Note**  
+> **Note**
 > This command requires [installing the aoc-cli crate](#download-puzzle-inputs-via-aoc-cli).
 
 ```sh
@@ -143,7 +129,7 @@ cargo clippy
 
 ### Read puzzle description in terminal
 
-> **Note**  
+> **Note**
 > This command requires [installing the aoc-cli crate](#download-puzzle-inputs-via-aoc-cli).
 
 ```sh
