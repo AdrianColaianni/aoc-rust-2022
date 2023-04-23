@@ -1,4 +1,72 @@
 use core::fmt;
+use std::{collections::VecDeque, str::Lines};
+
+#[derive(Debug)]
+enum Token {
+    Command(Command),
+    Node(Node),
+}
+
+fn tokenize(mut lines: Lines) -> Node {
+    let mut root = Node::new_dir("/".to_owned());
+    let mut cur_dir = vec![];
+
+    let mut line = lines.next().unwrap();
+    'command: loop {
+        // println!("{:?}", tokenize(line));
+        match tokenize_line(line) {
+            Token::Node(_) => unreachable!(),
+            Token::Command(cmd) => match cmd {
+                Command::Cd(dir) => {
+                    if dir == ".." {
+                        cur_dir.pop();
+                    } else {
+                        cur_dir.push(dir);
+                    }
+                }
+                Command::Ls => loop {
+                    line = match lines.next() {
+                        Some(line) => line,
+                        None => break 'command,
+                    };
+                    match tokenize_line(line) {
+                        Token::Command(_) => continue 'command,
+                        Token::Node(node) => {
+                            // println!("Inserting dir into {:?}", cur_dir);
+                            root.insert_dir(cur_dir.to_owned().into(), node);
+                        },
+                    }
+                },
+            },
+        }
+        line = match lines.next() {
+            Some(line) => line,
+            None => break 'command,
+        };
+    };
+    return root;
+}
+
+fn tokenize_line(line: &str) -> Token {
+    let line: Vec<&str> = line.split(' ').collect();
+    match line[0] {
+        "$" => match line[1] {
+            "cd" => Token::Command(Command::Cd(line[2].to_owned())),
+            "ls" => Token::Command(Command::Ls),
+            _ => unreachable!(),
+        },
+        "dir" => Token::Node(Node::new_dir(line[1].to_owned())),
+        _ => Token::Node(Node::File(
+            line[0].parse().expect("Couldn't parse file size"),
+        )),
+    }
+}
+
+#[derive(Debug)]
+enum Command {
+    Cd(String),
+    Ls,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 enum Node {
@@ -38,21 +106,24 @@ impl Node {
         }
     }
 
-    pub fn insert_dir(&mut self, parent_dir: &str, dir: Node) {
+    pub fn insert_dir(&mut self, mut path: VecDeque<String>, dir: Node) {
         match self {
             Node::File(_) => unreachable!(),
             Node::Dir { name, contents } => {
-                if name == parent_dir {
-                    contents.push(dir);
-                    return;
-                }
-                for item in contents {
-                    match item {
-                        Node::File(_) => continue,
-                        Node::Dir {
-                            name: _,
-                            contents: _,
-                        } => item.insert_dir(parent_dir, dir.to_owned()),
+                if name == &path[0] {
+                    path.pop_front();
+                    if path.is_empty() {
+                        contents.push(dir);
+                        return;
+                    }
+                    for item in contents {
+                        match item {
+                            Node::File(_) => continue,
+                            Node::Dir {
+                                name: _,
+                                contents: _,
+                            } => item.insert_dir(path.to_owned(), dir.to_owned()),
+                        }
                     }
                 }
             }
@@ -100,64 +171,12 @@ impl fmt::Display for Node {
 pub fn part_one(input: &str) -> Option<u32> {
     const SIZE_LIMIT: usize = 100000;
 
-    let mut lines = input.lines();
-    let mut root = Node::new_dir("/".to_owned());
-    let mut cur_dir = "/".to_owned();
+    let lines = input.lines();
+    let root = tokenize(lines);
 
-    let mut line = lines.next().unwrap();
-    'command: loop {
-        // println!("{:?}", tokenize(line));
-        match tokenize(line) {
-            Token::Node(_) => unreachable!(),
-            Token::Command(cmd) => match cmd {
-                Command::Cd(dir) => cur_dir = dir,
-                Command::Ls => loop {
-                    line = match lines.next() {
-                        Some(line) => line,
-                        None => break 'command,
-                    };
-                    match tokenize(line) {
-                        Token::Command(_) => continue 'command,
-                        Token::Node(node) => root.insert_dir(&cur_dir, node),
-                    }
-                },
-            },
-        }
-        line = match lines.next() {
-            Some(line) => line,
-            None => break 'command,
-        };
-    }
-    println!("{}", root);
+    // println!("{}", root);
     return Some(root.get_dir_size_below_limit(SIZE_LIMIT) as u32);
     // < 16135449
-}
-
-#[derive(Debug)]
-enum Token {
-    Command(Command),
-    Node(Node),
-}
-
-#[derive(Debug)]
-enum Command {
-    Cd(String),
-    Ls,
-}
-
-fn tokenize(line: &str) -> Token {
-    let line: Vec<&str> = line.split(' ').collect();
-    match line[0] {
-        "$" => match line[1] {
-            "cd" => Token::Command(Command::Cd(line[2].to_owned())),
-            "ls" => Token::Command(Command::Ls),
-            _ => unreachable!(),
-        },
-        "dir" => Token::Node(Node::new_dir(line[1].to_owned())),
-        _ => Token::Node(Node::File(
-            line[0].parse().expect("Couldn't parse file size"),
-        )),
-    }
 }
 
 pub fn part_two(_input: &str) -> Option<u32> {
