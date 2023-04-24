@@ -34,7 +34,7 @@ fn tokenize(mut lines: Lines) -> Node {
                         Token::Node(node) => {
                             // println!("Inserting dir into {:?}", cur_dir);
                             root.insert_dir(cur_dir.to_owned().into(), node);
-                        },
+                        }
                     }
                 },
             },
@@ -43,7 +43,7 @@ fn tokenize(mut lines: Lines) -> Node {
             Some(line) => line,
             None => break 'command,
         };
-    };
+    }
     return root;
 }
 
@@ -137,25 +137,43 @@ impl Node {
         }
     }
 
-    pub fn get_dir_size_below_limit(&self, limit: usize) -> usize {
+    pub fn get_dir_size_below_limit(&self, limit: usize) -> Vec<usize> {
         let size = self.get_size();
         if size == 0 {
-            return 0;
+            return vec![];
         }
-        let mut total = if size < limit { size } else { 0 };
+        let mut total = if size < limit { vec![size] } else { vec![] };
 
         match self {
             Node::File(_) => unreachable!(),
             Node::Dir { name: _, contents } => {
-                if total != 0 {
-                    // println!("Dir {:9} with size {:5} added to total", name, size);
-                    // println!("{}", name);
-                }
-                total += contents
-                    .iter()
+                let mut contents: Vec<usize> = contents
+                    .into_iter()
                     .filter(|&c| c.is_dir())
-                    .map(|s| s.get_dir_size_below_limit(limit))
-                    .sum::<usize>();
+                    .flat_map(|s| s.get_dir_size_below_limit(limit))
+                    .collect();
+                total.append(&mut contents);
+            }
+        };
+        total
+    }
+
+    pub fn get_dir_size_above_limit(&self, limit: usize) -> Vec<usize> {
+        let size = self.get_size();
+        if size == 0 {
+            return vec![];
+        }
+        let mut total = if size > limit { vec![size] } else { vec![] };
+
+        match self {
+            Node::File(_) => unreachable!(),
+            Node::Dir { name: _, contents } => {
+                let mut contents: Vec<usize> = contents
+                    .into_iter()
+                    .filter(|&c| c.is_dir())
+                    .flat_map(|s| s.get_dir_size_above_limit(limit))
+                    .collect();
+                total.append(&mut contents);
             }
         };
         total
@@ -175,12 +193,35 @@ pub fn part_one(input: &str) -> Option<u32> {
     let root = tokenize(lines);
 
     // println!("{}", root);
-    return Some(root.get_dir_size_below_limit(SIZE_LIMIT) as u32);
+    return Some(
+        root.get_dir_size_below_limit(SIZE_LIMIT)
+            .iter()
+            .sum::<usize>() as u32,
+    );
     // < 16135449
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u32> {
+    const DISK_SIZE: usize = 70000000;
+
+    let lines = input.lines();
+    let root = tokenize(lines);
+
+    let root_size: usize = root.get_size();
+    let space_left = DISK_SIZE - root_size;
+    let space_needed = 30000000 - space_left;
+    // println!("Disk size: {}, space left: {}, size needed: {}", root_size, space_left, size_needed);
+
+    let mut root = root.get_dir_size_above_limit(space_needed);
+    root.sort();
+
+    // println!("{:?}", root);
+    return Some(
+        root.iter()
+            .find(|&&s| s > space_needed)
+            .unwrap()
+            .to_owned() as u32,
+    );
 }
 
 fn main() {
@@ -202,6 +243,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 7);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(24933642));
     }
 }
