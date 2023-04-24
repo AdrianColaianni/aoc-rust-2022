@@ -1,37 +1,43 @@
 pub fn part_one(input: &str) -> Option<u32> {
-    let line: Vec<char> = input.chars().collect();
-    let mut last = vec!['.'; 4];
-    let mut packet_marker = 0;
-    for (i, letter) in line.iter().enumerate() {
-        last[i%4] = *letter;
-        if i>3 && uniq(&last) {
-            packet_marker = i+1;
-            break;
-        }
-    }
-    Some(packet_marker as u32)
+    Some(
+        input
+            .chars()
+            .collect::<Vec<char>>()
+            .windows(4)
+            .position(|w| {
+                let mut vec = Vec::with_capacity(4);
+                for x in w {
+                    if vec.contains(x) {
+                        return false;
+                    }
+
+                    vec.push(*x);
+                }
+                return true;
+            })
+            .unwrap() as u32 + 4,
+    )
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let line: Vec<char> = input.chars().collect();
-    let mut last = vec!['.'; 14];
-    let mut packet_marker = 0;
-    // println!("{:?}", line);
-    for (i, letter) in line.iter().enumerate() {
-        last[i%14] = *letter;
-        if i>13 && uniq(&last) {
-            packet_marker = i+1;
-            break;
-        }
-    }
-    Some(packet_marker as u32)
-}
+    Some(
+        input
+            .chars()
+            .collect::<Vec<char>>()
+            .windows(14)
+            .position(|w| {
+                let mut vec = Vec::with_capacity(14);
+                for x in w {
+                    if vec.contains(x) {
+                        return false;
+                    }
 
-fn uniq(array: &Vec<char>) -> bool {
-    let mut sorted = array.to_owned();
-    sorted.sort();
-    sorted.dedup();
-    array.len() == sorted.len()
+                    vec.push(*x);
+                }
+                return true;
+            })
+            .unwrap() as u32 + 14,
+    )
 }
 
 fn main() {
