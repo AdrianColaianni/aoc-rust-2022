@@ -63,7 +63,7 @@ fn visible(forest: &Vec<Vec<u32>>, row: usize, column: usize) -> bool {
     }
 
     // Down
-    if !tcol.get(row+1..tcol.len()).unwrap().iter().any(taller) {
+    if !tcol.get(row + 1..tcol.len()).unwrap().iter().any(taller) {
         // println!("Visible below");
         return true;
     }
@@ -72,7 +72,81 @@ fn visible(forest: &Vec<Vec<u32>>, row: usize, column: usize) -> bool {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let input: Vec<Vec<u32>> = input
+        .lines()
+        .map(|x| x.chars().map(|x| x.to_digit(10).unwrap()).collect())
+        .collect();
+    let row_lim = input.len() - 1;
+    let col_lim = input[0].len() - 1;
+
+    let mut best_ss = 0;
+
+    for r in 1..row_lim {
+        for c in 1..col_lim {
+            let ss = scene_score(&input, r, c);
+            if ss > best_ss {
+                best_ss = ss;
+            }
+        }
+    }
+
+    Some(best_ss)
+}
+
+fn scene_score(forest: &Vec<Vec<u32>>, row: usize, column: usize) -> u32 {
+    let tree = &forest[row][column];
+    let trow = &forest[row];
+    let tcol: &Vec<u32> = &forest.iter().map(|x| x[column]).collect();
+    let filter = |x| if x >= tree { None } else { Some(1) };
+
+    let mut left = trow
+        .get(1..column)
+        .unwrap()
+        .to_owned();
+    left.reverse();
+    let right = trow
+        .get(column + 1..trow.len()-1)
+        .unwrap();
+    let mut up = tcol
+        .get(1..row)
+        .unwrap()
+        .to_owned();
+    up.reverse();
+    let down = tcol
+        .get(row + 1..tcol.len()-1)
+        .unwrap();
+
+//     println!("Left: {:?}", left);
+//     println!("Right {:?}", right);
+//     println!("Up:   {:?}", up);
+//     println!("Down: {:?}", down);
+
+    let left: u32 = left
+        .iter()
+        .map_while(filter)
+        .sum::<u32>()
+        + 1;
+    let right: u32 = right
+        .iter()
+        .map_while(filter)
+        .sum::<u32>()
+        + 1;
+    let up: u32 = up
+        .iter()
+        .map_while(filter)
+        .sum::<u32>()
+        + 1;
+    let down: u32 = down
+        .iter()
+        .map_while(filter)
+        .sum::<u32>()
+        + 1;
+
+    let ss = left * right * up * down;
+
+    // println!("({}, {}) {}: score: {}*{}*{}*{}={}", row, column, tree, left, right, up, down, ss);
+
+    ss
 }
 
 fn main() {
@@ -95,6 +169,7 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 8);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(8));
+        // assert_eq!(part_two(&input), None);
     }
 }
