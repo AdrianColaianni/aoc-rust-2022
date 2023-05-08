@@ -1,28 +1,25 @@
-// 689 < answ < 4139
-// != 1576
 pub fn part_one(input: &str) -> Option<u32> {
-    let forest: Vec<Vec<u32>> = input
+    let input: Vec<Vec<u32>> = input
         .lines()
-        .map(|s| s.chars().map(|s| s.to_digit(10).unwrap()).collect())
+        .map(|x| x.chars().map(|x| x.to_digit(10).unwrap()).collect())
         .collect();
+    let row_width = input.len();
+    let col_width = input[0].len();
 
-    // println!("{:?}", forest);
+    let mut visible_trees = row_width * 2 + col_width * 2 - 4;
 
-    // Account for all exterior trees
-    let mut visible_count = forest[0].len() * 2 + forest.len() * 2 - 4;
+    // println!("Start with: {}", visible_trees);
 
-    // println!("{} trees are already visible", visible_count);
-
-    for row in 1..forest.len() - 1 {
-        for column in 1..forest[row].len() - 1 {
-            if visible(&forest, (column, row)) {
-                visible_count += 1;
+    for c in 1..col_width - 1 {
+        for r in 1..row_width - 1 {
+            if visible(&input, c, r) {
+                visible_trees += 1;
+                // println!("There are now {} visible", visible_trees);
             }
         }
     }
-    visible_count += 1;
-    Some(visible_count.try_into().unwrap())
-    // != 8085
+
+    Some(visible_trees as u32)
 }
 
 /*
@@ -30,54 +27,48 @@ pub fn part_one(input: &str) -> Option<u32> {
  * reporting true if any are the case. Each direction will be handled seporately
  * returning false if any report visible. loc is (col, row) like a graph
  *        _________ - col
- *      / [ 1 3 3 ]
- * row |  [ 3 9 9 ]
- *     \  [ 9 3 1 ]
+ *      / [ 1 2 3 ]
+ * row |  [ 4 5 6 ]
+ *     \  [ 7 8 9 ]
  */
-fn visible(forest: &Vec<Vec<u32>>, loc: (usize, usize)) -> bool {
-    let h_limit = forest[loc.1].len();
-    let row = &forest[loc.1];
-    let tree = &forest[loc.1][loc.0];
+fn visible(forest: &Vec<Vec<u32>>, row: usize, column: usize) -> bool {
+    let tree = &forest[row][column];
+    let trow = &forest[row];
+    let tcol: &Vec<u32> = &forest.iter().map(|x| x[column]).collect();
+    let taller = |x: &u32| x >= tree;
 
-    // Check left
-    if !row.get(0..loc.0).unwrap().iter().any(|t| t >= tree) {
-        println!("{:?}: {:?} visible left", row.get(0..loc.0).unwrap(), loc);
-        return false;
+    // println!("({}, {}) {}: row-{:?} col-{:?}", row, column, tree, trow, tcol);
+
+    // println!("Left: {:?}", trow.get(0..column));
+    // println!("Right {:?}", trow.get(column + 1..trow.len()));
+    // println!("Up:   {:?}", tcol.get(0..row));
+    // println!("Down: {:?}", tcol.get(row+1..tcol.len()));
+
+    // Left
+    if !trow.get(0..column).unwrap().iter().any(taller) {
+        // println!("Visible on left");
+        return true;
     }
 
-    // Check right
-    if !row
-        .get(loc.0 + 1..h_limit)
-        .unwrap()
-        .iter()
-        .any(|t| t >= tree)
-    {
-        println!("{:?}: {:?} visible right", row.get(loc.0 + 1..h_limit).unwrap(), loc);
-        return false;
+    // Right
+    if !trow.get(column + 1..trow.len()).unwrap().iter().any(taller) {
+        // println!("Visible on right");
+        return true;
     }
 
-    let column: Vec<u32> = (0..forest.len())
-        .map(|row_index| forest[row_index][loc.1])
-        .collect();
-
-    // Check up
-    if !column.get(0..loc.0).unwrap().iter().any(|t| t >= tree) {
-        println!("{:?}: {:?} visible up", column.get(0..loc.0).unwrap(), loc);
-        return false;
+    // Up
+    if !tcol.get(0..row).unwrap().iter().any(taller) {
+        // println!("Visible above");
+        return true;
     }
 
-    // Check down
-    if !column
-        .get(loc.1 + 1..h_limit)
-        .unwrap()
-        .iter()
-        .any(|t| t >= tree)
-    {
-        println!("{:?}: {:?} visible down", column.get(loc.1 + 1..h_limit).unwrap(), loc);
-        return false;
+    // Down
+    if !tcol.get(row+1..tcol.len()).unwrap().iter().any(taller) {
+        // println!("Visible below");
+        return true;
     }
 
-    true
+    false
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
@@ -97,8 +88,8 @@ mod tests {
     #[test]
     fn test_part_one() {
         let input = advent_of_code::read_file("examples", 8);
-        // assert_eq!(part_one(&input), Some(21));
-        assert_eq!(part_one(&input), None);
+        assert_eq!(part_one(&input), Some(21));
+        // assert_eq!(part_one(&input), None);
     }
 
     #[test]
